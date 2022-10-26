@@ -1,7 +1,6 @@
 package com.example.demo.controllers;
 
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -18,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.demo.kafka.KafkaSender;
 import com.example.demo.model.Employee;
 import com.example.demo.service.EmployeeService;
 
@@ -28,6 +28,9 @@ public class EmployeeController {
 	@Autowired
 	private EmployeeService employeeService;
 
+	@Autowired
+	private KafkaSender kafkaSender;
+
 	@PostMapping("/addEmployee")
 	public ResponseEntity<?> addEmployee(@RequestBody Employee employee) {
 
@@ -35,6 +38,9 @@ public class EmployeeController {
 		Employee response = employeeService.addEmpployee(employee);
 		map.put("data", response);
 		map.put("message", "Record is Saved Successfully!");
+
+		kafkaSender.send(response);
+		kafkaSender.send("Record is Saved Successfully!");
 		return new ResponseEntity<>(map, HttpStatus.CREATED);
 
 	}
@@ -65,10 +71,10 @@ public class EmployeeController {
 	@DeleteMapping("/{id}")
 	public ResponseEntity<String> deleteEmployee(@PathVariable Long id) {
 		employeeService.deleteEmpployee(id);
-		return new ResponseEntity<>( "Deleted successfully",HttpStatus.OK);
+		return new ResponseEntity<>("Deleted successfully", HttpStatus.OK);
 
 	}
-	
+
 	@GetMapping("search/{searchString}")
 	public Iterable<Employee> searchEmployee(@PathVariable String searchString) {
 		return employeeService.searcEmpployee(searchString);
